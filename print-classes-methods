@@ -1,0 +1,31 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
+import sys
+import os
+
+from utils import java as javautils
+
+if len( sys.argv ) < 2:
+	print "Print methods of class packaged in a jar"
+	print "Usage:"
+	command = sys.argv[ 0 ].split( '/' )[ -1 ]
+	print "%s <jar_name> <class_1_sring> <class_2_string> ..." % command
+	sys.exit( 1 )
+
+jar = sys.argv[ 1 ]
+classes_strings = sys.argv[ 2 : ]
+
+classes = javautils.get_jar_contents( jar )
+
+for classs in classes:
+	disasemble = None
+	if len( classes_strings ) == 0:
+		disasemble = True
+	else:
+		for cs in classes_strings:
+			if classs.lower().find( cs.lower() ) >= 0:
+				disasemble = True
+	if disasemble:
+		str = 'javap -classpath %s %s' % ( jar, classs )
+		print os.popen( str ).read()

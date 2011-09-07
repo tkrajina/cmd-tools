@@ -1,0 +1,23 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+"""
+v0.1 2010-07-01 First version
+"""
+
+import sys
+
+files = sys.argv[ 1 : ]
+
+for file_name in files:
+	contents = ''
+	f = open( file_name, 'r' )
+	for line in f:
+		contents += line.rstrip() + '\n'
+	f.close()
+	print '\n\n--------------------------------------------'
+	print contents.replace( '\n', '\\n\n' )
+	overwrite = raw_input( 'Overwrite %s [yN]' % file_name )
+	if overwrite.lower() == 'y':
+		f = open( file_name, 'w' )
+		f.write( contents )
+		f.close()

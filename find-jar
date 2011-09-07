@@ -1,0 +1,60 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+"""
+v0.1 2010-07-01 First version
+"""
+
+import os                as mod_os
+import os.path           as mod_path
+import sys               as mod_sys
+import xml.dom.minidom   as mod_minidom
+
+from utils import java as mod_javautils
+
+if len( mod_sys.argv ) < 3:
+	print "Search for java class for all jars found"
+	print "Usage:"
+	command = mod_sys.argv[ 0 ].split( '/' )[ -1 ]
+	print "%s <class_name> <file_or_path_1> <file_or_path_2> ..." % command
+	mod_sys.exit( 1 )
+
+class_name = mod_sys.argv[ 1 ]
+paths = mod_sys.argv[ 2 : ]
+
+# if class name like org/springframework/expression/PropertyAccessor:
+if class_name:
+	class_name = class_name.replace( '/', '.' )
+
+all_files = []
+
+for path in paths:
+	if mod_path.isdir( path ):
+		for root, dir, files in mod_os.walk( path ):
+			for file_name in files:
+				file_name = "%s/%s" % ( root, file_name )
+				all_files.append( file_name )
+	else:
+		all_files.append( path )
+
+# Extrack jars from eclipse .classpath:
+for file_name in all_files:
+	if file_name.endswith( '.classpath' ):
+		classpath_file = open( file_name, 'r' )
+		dom = mod_minidom.parseString( classpath_file.read() )
+		classpath_file.close()
+
+		root_node = dom.childNodes[ 0 ]
+		for node in root_node.childNodes:
+			if node.nodeName == 'classpathentry':
+				attributes = node.attributes
+				if 'kind' in attributes.keys() and attributes[ 'kind' ].nodeValue == 'var' and 'path' in attributes.keys():
+					path = attributes[ 'path' ].nodeValue
+					if path.endswith( '.jar' ):
+						if path.startswith( 'M2_REPO' ):
+							all_files.append( path.replace( 'M2_REPO', mod_os.environ[ 'HOME' ] + '/.m2/repository' ) )
+						else:
+							all_files.append( path )
+
+for file_name in all_files:
+	if file_name.endswith( '.jar' ):
+		mod_javautils.find_in_jar( file_name, class_name )

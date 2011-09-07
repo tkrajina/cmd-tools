@@ -1,0 +1,36 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
+import sys as _sys
+import os as _os
+import datetime as _datetime
+import os.path as _path
+import shutil as _shutil
+
+def execute( command_string ):
+	print command_string
+	p = _os.popen( command_string )
+
+	for line in p:
+		print line.strip()
+
+	return not p.close()
+
+path = _path.realpath( '.' )
+path_parts = path.split( '/' )
+project_name = path_parts[ -1 ]
+
+now = _datetime.datetime.now()
+now = now.strftime( '%Y-%m-%d-%H-%M' )
+
+tar_name = '%s--%s.tar' % ( project_name, now )
+
+if not execute( 'tar -cvf "%s" .git .gitignore' % tar_name ):
+	print 'Error making archive'
+	_sys.exit( 1 )
+
+target_file = '%s/backup/%s' % ( _os.environ[ 'HOME' ], tar_name )
+
+_shutil.move( tar_name, target_file )
+
+print 'Arhived to %s' % target_file

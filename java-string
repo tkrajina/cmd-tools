@@ -1,0 +1,20 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
+import sys
+
+print 'CTRL+D for exit'
+
+string = sys.stdin.read()
+
+print
+print
+print 'RESULT:'
+print '------------------------------------------------------'
+
+lines = string.split( '\n' )
+result = ''
+for line in lines:
+	result += '"%s\\n" + \n' % line.replace( "\"", "\\\"" )
+
+print result

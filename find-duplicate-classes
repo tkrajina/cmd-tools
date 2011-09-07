@@ -1,0 +1,41 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
+import sys
+import os
+
+from utils import java as javautils
+
+if len( sys.argv ) <= 1:
+	print "Search for duplicate classes in jar files"
+	print "Usage:"
+	command = sys.argv[ 0 ].split( '/' )[ -1 ]
+	print "%s <jar_1> <jar_2> ..." % command
+	sys.exit( 1 )
+
+# Class and all jars where it is found:
+classes = {}
+
+jars = sys.argv[ 1 : ]
+
+for i in range( len( jars ) ):
+	jar = jars[ i ]
+	print 'Processing jar #%3s of %3s: %s...' % ( i, len( jars ), jar )
+	jar_contents = javautils.get_jar_contents( jar )
+	for classs in jar_contents:
+		if not classes.has_key( classs ):
+			classes[ classs ] = []
+		classes[ classs ].append( jar )
+
+double_classes_no = 0
+
+for classs in classes.keys():
+	jars = classes[ classs ]
+	if len( jars ) > 1:
+		double_classes_no += 1
+		print '%s found in %s' % ( classs, ', '.join( jars ) )
+
+if double_classes_no == 0:
+	print 'No double classes found'
+else:
+	print 'Found %s double classes' % double_classes_no

@@ -1,0 +1,83 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
+import os
+import re
+import sys
+from utils import optparser as mod_optparser
+
+optparser = mod_optparser.OptParser()
+
+show_help = optparser.has_param( short_name = 'h', long_name = 'help', comment = 'Help' )
+execute = optparser.has_param( short_name = 'e', long_name = 'execute', comment = 'Execute rename/copy' )
+force = optparser.has_param( short_name = 'f', long_name = 'force', comment = 'Force even if multiple files are moved/copied to same target location' )
+leave_original = optparser.has_param( short_name = 'l', long_name = 'leave', comment = 'Leave original (i.e. copy file)' )
+args = optparser.args_left()
+
+if show_help or len( args ) < 2:
+	command = sys.argv[ 0 ].split( '/' )[ -1 ]
+
+	print "Rename files with regular expressions"
+	print
+	print "Usage:"
+	print "\t%s <FROM_regular_expression> <TO_rename_template> [files...]" % command
+	example_command_args = "\"(.*)\.txt\" \"\\1.html\" files..."
+	print
+	print "Show renames (but don't execute them):"
+	print '\t ' + command + ' ' + example_command_args
+	print "Execute renames:"
+	print '\t ' + command + ' -e ' + example_command_args
+	print 'Options:'
+	print '\n'.join( optparser.get_comments() )
+
+	sys.exit( 1 )
+
+from_str = args[ 0 ]
+to_str = args[ 1 ]
+_files = args[ 2 : ]
+
+if not _files:
+	_files = os.listdir( '.' )
+
+files = []
+for f in _files:
+	if f != '.' and f != '..':
+		files.append( f )
+
+# expression must be full string; ie -- must start with ^ and end with $
+if not from_str.startswith( '^' ):
+	from_str = '^%s' % from_str
+if not from_str.endswith( '$' ):
+	from_str = '%s$' % from_str
+
+renames = {}
+
+for file_name in files:
+	src = file_name
+	dst = re.sub( from_str, to_str, file_name )
+	if src != dst:
+		if not execute:
+			print '%s -> %s' % ( src, dst )
+		if dst in renames.values():
+			if not force:
+				print 'WARNING: More than one file would be renamed to %s:' % dst
+				print '\t%s' % src
+				for _src in renames.keys():
+					if renames[ _src ] == dst:
+						print '\t%s' % _src
+				print 'Use --force or -f to force this behaviour)'
+				sys.exit( 1 )
+		renames[ src ] = dst
+
+if execute:
+	for src, dst in renames.items():
+
+		if leave_original:
+			command_line = 'cp %s %s' % ( src, dst )
+		else:
+			command_line = 'mv %s %s' % ( src, dst )
+
+		for line in os.popen( command_line ):
+			print line
+else:
+	print "\nUse --execute or -e to execute rename commands"
