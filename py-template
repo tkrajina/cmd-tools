@@ -1,0 +1,79 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
+import utils.optparser as mod_optparser
+import sys             as mod_sys
+import re              as mod_re
+import os              as mod_os
+
+opt_parser = mod_optparser.OptParser()
+
+class_name = opt_parser.get_param( short_name = 'cl', long_name = 'class', comment = 'Class name (if any)' )
+shebang = opt_parser.has_param( short_name = 'sh', long_name = 'shebang', comment = 'Shebang (i.e. the line "#!/usr/bin/python" at the start)' )
+coding = opt_parser.get_param( short_name = 'cc', long_name = 'coding-charset', comment = 'Coding charset (i.e. the line: "# -*- coding: utf-8 -*- " )' )
+main = opt_parser.has_param( short_name = 'ma', long_name = 'main', comment = 'Create if __name__ == \'__main__\': ...' )
+module = opt_parser.get_param( short_name = 'mo', long_name = 'module', comment = 'Create module instead of file' )
+is_help = opt_parser.has_param( short_name = 'h', long_name = 'help', comment = 'This help' )
+
+file_names = opt_parser.args_left()
+
+if ( not file_names and not module ) or is_help:
+	print "Create empty python scripts"
+	print "Parameters:"
+	print "\n".join( opt_parser.get_comments() )
+	mod_sys.exit( 1 )
+
+result = []
+
+def mk_py_dir_all( package ):
+	print 'Creating python module: {0}'.format( package )
+	parts = package.split( '/' )
+	tmp_path = ''
+	for part in parts:
+		if not mod_re.match( '^[\w\d_]+$', part ):
+			print 'Invalid directory name: {0}'.format( part )
+			mod_sys.exit( 1 )
+		tmp_path = '{0}/{1}'.format( tmp_path, part )
+		if tmp_path.startswith( '/' ):
+			tmp_path = tmp_path[ 1 : ]
+		mk_py_dir( tmp_path )
+
+def mk_py_dir( path ):
+		print 'Creating directory: {0}'.format( path )
+		mod_os.mkdir( path )
+		print 'Creating empty file: {0}/__init__.py'.format( path )
+		f = open( '{0}/__init__.py'.format( path ), 'w' )
+		f.write( '' )
+		f.close()
+
+if module:
+	mk_py_dir_all( module )
+
+if shebang:
+	result.append( '#!/usr/bin/python' )
+
+if coding:
+	result.append( '# -*- coding: utf-8 -*-' )
+	result.append( '' )
+
+if class_name:
+	result.append( 'class {0}:'.format( class_name ) )
+	result.append( '\tdef __init__( self ):' )
+	result.append( '\t\tpass' )
+	result.append( '' )
+
+if main:
+	result.append( 'if __name__ == \'__main__\':' )
+	result.append( '\tpass' )
+	result.append( '' )
+
+result = '\n'.join( result )
+
+for file_name in file_names:
+	if not file_name.endswith( '.py' ):
+		file_name = '{0}.py'.format( file_name )
+	f = open( file_name, 'w' )
+	f.write( result )
+	f.close()
+
+	print 'Written {0}'.format( file_name )
