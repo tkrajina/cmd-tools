@@ -5,6 +5,7 @@ import utils.optparser as mod_optparser
 import sys             as mod_sys
 import re              as mod_re
 import os              as mod_os
+import os.path         as mod_path
 
 opt_parser = mod_optparser.OptParser()
 
@@ -39,12 +40,15 @@ def mk_py_dir_all( package ):
 		mk_py_dir( tmp_path )
 
 def mk_py_dir( path ):
-		print 'Creating directory: {0}'.format( path )
-		mod_os.mkdir( path )
-		print 'Creating empty file: {0}/__init__.py'.format( path )
-		f = open( '{0}/__init__.py'.format( path ), 'w' )
-		f.write( '' )
-		f.close()
+		if not mod_path.exists( path ):
+			mod_os.mkdir( path )
+			print 'Created directory: {0}'.format( path )
+		file_name = '{0}/__init__.py'.format( path )
+		if not mod_path.exists( file_name ):
+			f = open( file_name, 'w' )
+			f.write( '' )
+			f.close()
+			print 'Created empty file: {0}/__init__.py'.format( path )
 
 if is_module:
 	for file_name in file_names:
