@@ -12,7 +12,7 @@ class_name = opt_parser.get_param( short_name = 'cl', long_name = 'class', comme
 shebang = opt_parser.has_param( short_name = 'sh', long_name = 'shebang', comment = 'Shebang (i.e. the line "#!/usr/bin/python" at the start)' )
 coding = opt_parser.get_param( short_name = 'cc', long_name = 'coding-charset', comment = 'Coding charset (i.e. the line: "# -*- coding: utf-8 -*- " )' )
 main = opt_parser.has_param( short_name = 'ma', long_name = 'main', comment = 'Create if __name__ == \'__main__\': ...' )
-module = opt_parser.get_param( short_name = 'mo', long_name = 'module', comment = 'Create module instead of file' )
+is_module = opt_parser.has_param( short_name = 'mo', long_name = 'module', comment = 'Create module instead of file' )
 is_help = opt_parser.has_param( short_name = 'h', long_name = 'help', comment = 'This help' )
 
 file_names = opt_parser.args_left()
@@ -46,8 +46,9 @@ def mk_py_dir( path ):
 		f.write( '' )
 		f.close()
 
-if module:
-	mk_py_dir_all( module )
+if is_module:
+	for file_name in file_names:
+		mk_py_dir_all( file_name )
 
 if shebang:
 	result.append( '#!/usr/bin/python' )

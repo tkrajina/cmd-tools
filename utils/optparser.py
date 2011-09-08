@@ -51,7 +51,8 @@ class OptParser:
 					return result
 				else:
 					result = None
-					self.args.remove( i )
+					if i < len( self.args ) - 1:
+						self.args.remove( i )
 					if not result:
 						return default
 					return result
