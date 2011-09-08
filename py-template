@@ -53,32 +53,32 @@ def mk_py_dir( path ):
 if is_module:
 	for file_name in file_names:
 		mk_py_dir_all( file_name )
-
-if shebang:
-	result.append( '#!/usr/bin/python' )
-
-if coding:
-	result.append( '# -*- coding: utf-8 -*-' )
-	result.append( '' )
-
-if class_name:
-	result.append( 'class {0}:'.format( class_name ) )
-	result.append( '\tdef __init__( self ):' )
-	result.append( '\t\tpass' )
-	result.append( '' )
-
-if main:
-	result.append( 'if __name__ == \'__main__\':' )
-	result.append( '\tpass' )
-	result.append( '' )
-
-result = '\n'.join( result )
-
-for file_name in file_names:
-	if not file_name.endswith( '.py' ):
-		file_name = '{0}.py'.format( file_name )
-	f = open( file_name, 'w' )
-	f.write( result )
-	f.close()
-
-	print 'Written {0}'.format( file_name )
+else:
+	if shebang:
+		result.append( '#!/usr/bin/python' )
+	
+	if coding:
+		result.append( '# -*- coding: utf-8 -*-' )
+		result.append( '' )
+	
+	if class_name:
+		result.append( 'class {0}:'.format( class_name ) )
+		result.append( '\tdef __init__( self ):' )
+		result.append( '\t\tpass' )
+		result.append( '' )
+	
+	if main:
+		result.append( 'if __name__ == \'__main__\':' )
+		result.append( '\tpass' )
+		result.append( '' )
+	
+	result = '\n'.join( result )
+	
+	for file_name in file_names:
+		if not file_name.endswith( '.py' ):
+			file_name = '{0}.py'.format( file_name )
+		f = open( file_name, 'w' )
+		f.write( result )
+		f.close()
+	
+		print 'Written {0}'.format( file_name )
