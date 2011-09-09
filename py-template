@@ -77,8 +77,10 @@ else:
 	for file_name in file_names:
 		if not file_name.endswith( '.py' ):
 			file_name = '{0}.py'.format( file_name )
-		f = open( file_name, 'w' )
-		f.write( result )
-		f.close()
-	
-		print 'Written {0}'.format( file_name )
+		if mod_path.exists( file_name ):
+			print 'File {0} already exists!'.format( file_name )
+		else:
+			f = open( file_name, 'w' )
+			f.write( result )
+			f.close()
+			print 'Written {0}'.format( file_name )
