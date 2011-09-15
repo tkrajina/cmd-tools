@@ -11,14 +11,22 @@ opt_parser = mod_optparser.OptParser()
 
 class_name = opt_parser.get_param( short_name = 'cl', long_name = 'class', comment = 'Class name (if any)' )
 shebang = opt_parser.has_param( short_name = 'sh', long_name = 'shebang', comment = 'Shebang (i.e. the line "#!/usr/bin/python" at the start)' )
-coding = opt_parser.get_param( short_name = 'cc', long_name = 'coding-charset', comment = 'Coding charset (i.e. the line: "# -*- coding: utf-8 -*- " )' )
+coding = opt_parser.get_param( short_name = 'cc', long_name = 'coding-charset', comment = 'Coding charset (i.e. the line: "# -*- coding: utf-8 -*- " )', default = 'utf-8' )
+no_coding = opt_parser.has_param( short_name = 'nocc', long_name = 'no-coding-charset', comment = 'Do not add coding charset line' )
 main = opt_parser.has_param( short_name = 'ma', long_name = 'main', comment = 'Create if __name__ == \'__main__\': ...' )
 is_module = opt_parser.has_param( short_name = 'mo', long_name = 'module', comment = 'Create module instead of file' )
 is_help = opt_parser.has_param( short_name = 'h', long_name = 'help', comment = 'This help' )
+import_logger = opt_parser.has_param( short_name = 'lo', long_name = 'logger', comment = 'Import logger?' )
+console_logger = opt_parser.has_param( short_name = 'clo', long_name = 'console-logger', comment = 'Basic console logger' )
+file_logger = opt_parser.has_param( short_name = 'flo', long_name = 'file-logger', comment = 'Basic file logger' )
+force_save = opt_parser.has_param( short_name = 'f', long_name = 'force', comment = 'Force write (even if the file exists' )
 
 file_names = opt_parser.args_left()
 
-if ( not file_names and not module ) or is_help:
+if no_coding:
+	coding = None
+
+if ( not file_names and not is_module ) or is_help:
 	print "Create empty python scripts"
 	print "Parameters:"
 	print "\n".join( opt_parser.get_comments() )
@@ -59,7 +67,8 @@ else:
 	
 	if coding:
 		result.append( '# -*- coding: utf-8 -*-' )
-		result.append( '' )
+
+	result.append( '' )
 	
 	if class_name:
 		result.append( 'class {0}:'.format( class_name ) )
@@ -71,13 +80,32 @@ else:
 		result.append( 'if __name__ == \'__main__\':' )
 		result.append( '\tpass' )
 		result.append( '' )
+
+	if import_logger or console_logger or file_logger:
+		result.append( 'import logging as mod_log' )
+		result.append( '' )
+
+	if console_logger:
+		result.append( 'mod_log.basicConfig( level = mod_log.DEBUG,' )
+		result.append( '                     format = \'%(asctime)s %(name)-12s %(levelname)-8s %(message)s\' )' )
+		result.append( '' )
+	elif file_logger:
+		result.append( 'mod_log.basicConfig( level = mod_log.DEBUG,' )
+		result.append( '                     format = \'%(asctime)s %(name)-12s %(levelname)-8s %(message)s\',' )
+		result.append( '                     datefmt = \'%m-%d %H:%M\' ),' )
+		result.append( '                     filename = \'app.log\',' )
+		result.append( '                     filemode = \'w\' )' )
+		result.append( '' )
+
+	if file_logger:
+		pass
 	
 	result = '\n'.join( result )
 	
 	for file_name in file_names:
 		if not file_name.endswith( '.py' ):
 			file_name = '{0}.py'.format( file_name )
-		if mod_path.exists( file_name ):
+		if not force_save and mod_path.exists( file_name ):
 			print 'File {0} already exists!'.format( file_name )
 		else:
 			f = open( file_name, 'w' )
