@@ -1,0 +1,119 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
+import sys               as mod_sys
+import os                as mod_os
+import os.path           as mod_path
+import xml.dom.minidom   as mod_minidom
+import shutil            as mod_shutil
+
+try:
+	tomcat_deployment_descriptor_file = open( 'tomcat_deployment_descriptor' )
+	tomcat_deployment_descriptor = tomcat_deployment_descriptor_file.read()
+	tomcat_deployment_descriptor_file.close()
+
+	exec( tomcat_deployment_descriptor )
+
+	assert 'TOMCAT_WEPAPP_DIR' in vars().keys()
+	assert 'LOCAL_WEB_DIR' in vars().keys()
+
+	if not 'PROJECT_ALIASES' in vars().keys():
+		PROJECT_ALIASES = {}
+
+	if not 'CLASSPATH_VARIABLES' in vars().keys():
+		CLASSPATH_VARIABLES = {}
+
+except Exception, e:
+	print e
+	print 'Invalid tomcat_deployment_descriptor file!'
+	mod_sys.exit( 1 )
+
+def get_attribute_value( node, attribute_name ):
+	attributes = node.attributes
+	if not attribute_name in attributes.keys():
+		return None
+	return attributes[ attribute_name ].nodeValue
+
+def get_file_name( path ):
+	if not path:
+		return path
+	if not '/' in path:
+		return path
+	
+	return path.split( '/' )[ -1 ]
+
+def process_eclipse_classpath( project_path, deploy_jars = True ):
+	classpath_file = open( '{0}/.classpath'.format( project_path ) )
+	dom = mod_minidom.parseString( classpath_file.read() )
+	classpath_file.close()
+
+	source_path_outputs = {}
+	default_output = None
+
+	root_node = dom.childNodes[ 0 ]
+	for node in root_node.childNodes:
+		if node.nodeName == 'classpathentry':
+			kind = get_attribute_value( node, 'kind' )
+			if kind == 'var' and deploy_jars:
+				path = get_attribute_value( node, 'path' )
+				for classpath_variable, classpath_variable_value in CLASSPATH_VARIABLES.items():
+					if classpath_variable in path:
+						path = path.replace( classpath_variable, classpath_variable_value )
+				jar_destination = '{0}/WEB-INF/lib/{1}'.format( TOMCAT_WEPAPP_DIR, get_file_name( path ) )
+				#print jar_destination
+				copy( path, jar_destination )
+			elif kind == 'src':
+				path = get_attribute_value( node, 'path' )
+				if path.startswith( '/' ):
+					#print 'projekt', kind, path
+					project_name = path[ 1 : ]
+					#print project_name
+					if PROJECT_ALIASES.has_key( project_name ):
+						project_name = PROJECT_ALIASES[ project_name ]
+					process_eclipse_classpath( '../{0}'.format( project_name ), deploy_jars = False )
+				else:
+					output = get_attribute_value( node, 'output' )
+					source_path_outputs[ path ] = output
+					#print 'lokalno', kind, path, output
+			elif kind == 'output':
+				default_output = get_attribute_value( node, 'path' )
+
+	for source_path in source_path_outputs.keys():
+		if not source_path_outputs[ source_path ]:
+			source_path_outputs[ source_path ] = default_output
+
+	for output in source_path_outputs.values():
+		copy_files( '{0}/{1}'.format( project_path, output ), '{0}/WEB-INF/classes'.format( TOMCAT_WEPAPP_DIR ) )
+
+def create_empty_app_directory( path ):
+	clean_directory( path )
+	mod_os.mkdir( path )
+	mod_os.mkdir( '{0}/WEB-INF'.format( path ) )
+	mod_os.mkdir( '{0}/WEB-INF/lib'.format( path ) )
+	mod_os.mkdir( '{0}/WEB-INF/classes'.format( path ) )
+
+def copy( source_file, destination_file ):
+	#print '{0} -> {1}'.format( source_file, destination_file )
+	print 'Copy: {0}'.format( destination_file )
+	mod_shutil.copy( source_file, destination_file )
+
+def copy_files( source_path, destination_path ):
+	all_files = []
+	for root, dir_name, files in mod_os.walk( source_path ):
+		for file_name in files:
+			directory = root[ len( source_path ) + 1 : ]
+			destination_directory = '{0}/{1}'.format( destination_path, directory )
+			if not mod_path.exists( destination_directory ):
+				mod_os.makedirs( destination_directory )
+			copy( '{0}/{1}'.format( root, file_name ), '{0}/{1}'.format( destination_directory, file_name ) )
+
+def clean_directory( path ):
+	if mod_path.exists( path ):
+			mod_shutil.rmtree( path )
+
+if __name__ == '__main__':
+	create_empty_app_directory( TOMCAT_WEPAPP_DIR )
+	copy_files( LOCAL_WEB_DIR, TOMCAT_WEPAPP_DIR )
+	process_eclipse_classpath( '.', deploy_jars = True )
+
+	print 'Deployed on {0}'.format( TOMCAT_WEPAPP_DIR )
