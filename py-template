@@ -18,7 +18,7 @@ is_help = opt_parser.has_param( short_name = 'h', long_name = 'help', comment = 
 
 file_names = opt_parser.args_left()
 
-if ( not file_names and not module ) or is_help:
+if ( not file_names and not is_module ) or is_help:
 	print "Create empty python scripts"
 	print "Parameters:"
 	print "\n".join( opt_parser.get_comments() )
