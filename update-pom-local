@@ -6,6 +6,7 @@ import os               as mod_os
 import os.path          as mod_path
 import xml.dom.minidom  as mod_minidom
 import sys              as mod_sys
+import codecs           as mod_codecs
 
 projects = mod_sys.argv[ 1 : ]
 
@@ -23,7 +24,7 @@ def find_first_child( node, child_node_name ):
 	return None
 
 def read( file_name ):
-	f = open( file_name, 'r' )
+	f = mod_codecs.open( file_name, 'r', encoding = 'ascii', errors = 'ignore' )
 	contents = f.read()
 	f.close()
 
@@ -33,6 +34,8 @@ def read_and_parse( file_name ):
 	return mod_minidom.parseString( read( file_name ) )
 
 def parse_project_metadata( project_folder ):
+	print 'Parsing:', project_folder
+
 	pom_file = '{0}/pom.xml'.format( project_folder )
 
 	dom = read_and_parse( pom_file )
@@ -71,6 +74,7 @@ def is_maven_project( directory ):
 
 def update_pom( directory ):
 	print 'Update pom: {0}'.format( directory )
+
 	pom_file = '{0}/pom.xml'.format( directory )
 	pom = read( pom_file )
 	dom = read_and_parse( pom_file )
@@ -96,7 +100,7 @@ def update_pom( directory ):
 
 			pom = check_local_project( group_id, artifact_id, version, pom )
 	
-	f = open( pom_file, 'w' )
+	f = mod_codecs.open( pom_file, 'w' )
 	f.write( pom )
 	f.close()
 
