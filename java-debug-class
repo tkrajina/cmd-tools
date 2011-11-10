@@ -108,6 +108,30 @@ public class DBG {
 		printLine( "TEMPDEBUG>", objects );
 	}
 	
+	public static void printBinaryRepresentation( byte[] bytes ) {
+		print( getBinaryRepresentation( bytes ) );
+	}
+	
+	public static String getBinaryRepresentation( byte[] bytes ) {
+		if( bytes == null ) {
+			return "null";
+		}
+		
+		StringBuilder result = new StringBuilder();
+		
+		for( byte b : bytes ) {
+			String binary = Integer.toBinaryString( ( 256 + (int) b ) % 256 );
+			
+			for( int i = 0; i < 8 - binary.length(); i++ ) {
+				result.append( "0" );
+			}
+			result.append( binary );
+			result.append( " " );
+		}
+		
+		return result.toString();
+	}
+	
 	public static final void todo( Object... objects ) {}
 	
 	public static final void comment( Object... objects ) {}
@@ -130,7 +154,7 @@ public class DBG {
 		String string = result.toString();
 	
 		if( prefix != null && prefix.length() > 0 ) {
-			return string.replace( "\\n", "\\n                                         ".substring( 0, prefix.length() + 1 ) );
+			return string.replace( "\n", "\n                                         ".substring( 0, prefix.length() + 1 ) );
 		}
 		
 		return string;
@@ -204,7 +228,7 @@ public class DBG {
 	
 	public static String getCommandLine( Class<?> classWithMainMethod, String... additionalArguments ) {
 		String javaCommand = "java";
-		if( FILE_SEPARATOR.equals( "\\\\" ) ) {
+		if( FILE_SEPARATOR.equals( "\\" ) ) {
 			// Probably windows:
 			javaCommand += ".exe";
 		}
@@ -271,7 +295,7 @@ public class DBG {
 			String fromPrevious = String.format( "%10.4f", timerData.getTime() - previous );
 			String fromStart = String.format( "%10.4f", timerData.getTime() - start );
 
-			result.append( fromPrevious ).append( "ms" ).append( fromStart ).append( "ms" ).append( " - " ).append( timerData.getName() ).append( '\\n' );
+			result.append( fromPrevious ).append( "ms" ).append( fromStart ).append( "ms" ).append( " - " ).append( timerData.getName() ).append( '\n' );
 		}
 		return result.toString();
 	}
