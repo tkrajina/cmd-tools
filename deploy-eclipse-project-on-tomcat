@@ -60,8 +60,8 @@ def process_eclipse_classpath( project_path, deploy_jars = True ):
 					if classpath_variable in path:
 						path = path.replace( classpath_variable, classpath_variable_value )
 				jar_destination = '{0}/WEB-INF/lib/{1}'.format( TOMCAT_WEPAPP_DIR, get_file_name( path ) )
-				#print jar_destination
-				copy( path, jar_destination )
+				if not 'servlet-api' in path:
+					copy( path, jar_destination )
 			elif kind == 'src':
 				path = get_attribute_value( node, 'path' )
 				if path.startswith( '/' ):
