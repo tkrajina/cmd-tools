@@ -154,7 +154,7 @@ public class DBG {
 		String string = result.toString();
 	
 		if( prefix != null && prefix.length() > 0 ) {
-			return string.replace( "\n", "\n                                         ".substring( 0, prefix.length() + 1 ) );
+			return string.replace( "\\n", "\\n                                         ".substring( 0, prefix.length() + 1 ) );
 		}
 		
 		return string;
@@ -228,7 +228,7 @@ public class DBG {
 	
 	public static String getCommandLine( Class<?> classWithMainMethod, String... additionalArguments ) {
 		String javaCommand = "java";
-		if( FILE_SEPARATOR.equals( "\\" ) ) {
+		if( FILE_SEPARATOR.equals( "\\\\" ) ) {
 			// Probably windows:
 			javaCommand += ".exe";
 		}
@@ -295,7 +295,7 @@ public class DBG {
 			String fromPrevious = String.format( "%10.4f", timerData.getTime() - previous );
 			String fromStart = String.format( "%10.4f", timerData.getTime() - start );
 
-			result.append( fromPrevious ).append( "ms" ).append( fromStart ).append( "ms" ).append( " - " ).append( timerData.getName() ).append( '\n' );
+			result.append( fromPrevious ).append( "ms" ).append( fromStart ).append( "ms" ).append( " - " ).append( timerData.getName() ).append( '\\n' );
 		}
 		return result.toString();
 	}
