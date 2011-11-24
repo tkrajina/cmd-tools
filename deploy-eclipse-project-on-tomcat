@@ -23,6 +23,11 @@ try:
 	if not 'CLASSPATH_VARIABLES' in vars().keys():
 		CLASSPATH_VARIABLES = {}
 
+	if TOMCAT_WEPAPP_DIR.endswith( '/' ):
+		TOMCAT_WEPAPP_DIR = TOMCAT_WEPAPP_DIR[ : -1 ]
+	if LOCAL_WEB_DIR.endswith( '/' ):
+		LOCAL_WEB_DIR = LOCAL_WEB_DIR[ : -1 ]
+
 except Exception, e:
 	print e
 	print 'Invalid tomcat_deployment_descriptor file!'
