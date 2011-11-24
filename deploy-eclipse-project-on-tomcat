@@ -114,7 +114,11 @@ def copy_files( source_path, destination_path ):
 
 def clean_directory( path ):
 	if mod_path.exists( path ):
+		delete = raw_input( 'Delete %s and redeploy [y/n]? ' )
+		if delete.lower() == 'y': 
 			mod_shutil.rmtree( path )
+		else:
+			mod_sys.exit( 1 )
 
 if __name__ == '__main__':
 	create_empty_app_directory( TOMCAT_WEPAPP_DIR )
