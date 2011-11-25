@@ -9,13 +9,28 @@ import os.path           as mod_path
 import sys               as mod_sys
 import xml.dom.minidom   as mod_minidom
 
-from utils import java as mod_javautils
+import utils.java        as mod_javautils
+import utils.optparser   as mod_optparser
 
-if len( mod_sys.argv ) < 3:
-	print "Search for java class for all jars found"
-	print "Usage:"
+opt_parser = mod_optparser.OptParser()
+
+is_help = opt_parser.has_param( short_name = 'h', long_name = 'help', comment = 'Help' )
+is_quiet = opt_parser.has_param( short_name = 'q', long_name = 'quiet', comment = 'Show only jar that matches' )
+
+if is_help or len( mod_sys.argv ) < 3:
 	command = mod_sys.argv[ 0 ].split( '/' )[ -1 ]
+
+	print "Search for java class in jars"
+	print
+	print "Usage:"
 	print "%s <class_name> <file_or_path_1> <file_or_path_2> ..." % command
+	print
+	print 'Or (for eclipse projects):'
+	print "%s <class_name> .classpath ..." % command
+	print
+	print 'Options:'
+	print '\n'.join( opt_parser.get_comments() )
+
 	mod_sys.exit( 1 )
 
 class_name = mod_sys.argv[ 1 ]
@@ -57,4 +72,4 @@ for file_name in all_files:
 
 for file_name in all_files:
 	if file_name.endswith( '.jar' ):
-		mod_javautils.find_in_jar( file_name, class_name )
+		mod_javautils.find_in_jar( file_name, class_name, quiet = is_quiet )
