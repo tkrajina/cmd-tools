@@ -7,6 +7,21 @@ import os.path           as mod_path
 import xml.dom.minidom   as mod_minidom
 import shutil            as mod_shutil
 
+"""
+Example of 'tomcat_deployment_descriptor' file:
+
+TOMCAT_WEPAPP_DIR = '/path/to/tomcat/webapp/ApplicationName/'
+
+LOCAL_WEB_DIR = ( 'path/to/local/web/files', 'path/to/local/web/files' )
+
+PROJECT_ALIASES = {}
+
+# Used for parsing .classpath with maven jars:
+CLASSPATH_VARIABLES = {
+	'M2_REPO': '/home/user/.m2/repository',
+}
+"""
+
 try:
 	tomcat_deployment_descriptor_file = open( 'tomcat_deployment_descriptor' )
 	tomcat_deployment_descriptor = tomcat_deployment_descriptor_file.read()
@@ -25,9 +40,22 @@ try:
 
 	if TOMCAT_WEPAPP_DIR.endswith( '/' ):
 		TOMCAT_WEPAPP_DIR = TOMCAT_WEPAPP_DIR[ : -1 ]
-	if LOCAL_WEB_DIR.endswith( '/' ):
-		LOCAL_WEB_DIR = LOCAL_WEB_DIR[ : -1 ]
 
+	local_web_directories = []
+	try:
+		# Check if it is a collection:
+		iter( LOCAL_WEB_DIR )
+		for local_web_dir in LOCAL_WEB_DIR:
+			if local_web_dir.endswith( '/' ):
+				local_web_directories.append( local_web_dir[ : -1 ] )
+			else:
+				local_web_directories.append( local_web_dir )
+	except:
+		# Otherwise single string:
+		if LOCAL_WEB_DIR.endswith( '/' ):
+			local_web_directories.append( LOCAL_WEB_DIR[ : -1 ] )
+		else:
+			local_web_directories.append( LOCAL_WEB_DIR )
 except Exception, e:
 	print e
 	print 'Invalid tomcat_deployment_descriptor file!'
@@ -114,7 +142,7 @@ def copy_files( source_path, destination_path ):
 
 def clean_directory( path ):
 	if mod_path.exists( path ):
-		delete = raw_input( 'Delete %s and redeploy [y/n]? ' )
+		delete = raw_input( 'Delete %s and redeploy [y/n]? ' % path )
 		if delete.lower() == 'y': 
 			mod_shutil.rmtree( path )
 		else:
@@ -122,7 +150,8 @@ def clean_directory( path ):
 
 if __name__ == '__main__':
 	create_empty_app_directory( TOMCAT_WEPAPP_DIR )
-	copy_files( LOCAL_WEB_DIR, TOMCAT_WEPAPP_DIR )
+	for local_web_dir in local_web_directories:
+		copy_files( local_web_dir, TOMCAT_WEPAPP_DIR )
 	process_eclipse_classpath( '.', deploy_jars = True )
 
 	print 'Deployed on {0}'.format( TOMCAT_WEPAPP_DIR )
