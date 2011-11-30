@@ -1,6 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
+import re                as mod_re
 import sys               as mod_sys
 import os                as mod_os
 import os.path           as mod_path
@@ -22,6 +23,8 @@ CLASSPATH_VARIABLES = {
 }
 """
 
+not_copied = []
+
 try:
 	tomcat_deployment_descriptor_file = open( 'tomcat_deployment_descriptor' )
 	tomcat_deployment_descriptor = tomcat_deployment_descriptor_file.read()
@@ -37,6 +40,9 @@ try:
 
 	if not 'CLASSPATH_VARIABLES' in vars().keys():
 		CLASSPATH_VARIABLES = {}
+
+	if not 'EXCEPT' in vars().keys():
+		EXCEPT = []
 
 	if TOMCAT_WEPAPP_DIR.endswith( '/' ):
 		TOMCAT_WEPAPP_DIR = TOMCAT_WEPAPP_DIR[ : -1 ]
@@ -129,7 +135,17 @@ def create_empty_app_directory( path ):
 def copy( source_file, destination_file ):
 	#print '{0} -> {1}'.format( source_file, destination_file )
 	print 'Copy: {0}'.format( destination_file )
-	mod_shutil.copy( source_file, destination_file )
+
+	do_copy = True
+	for except_regexp in EXCEPT:
+		if mod_re.match( except_regexp, source_file ):
+			do_copy = False
+
+	if do_copy:
+		mod_shutil.copy( source_file, destination_file )
+	else:
+		print 'Exception (not copied): {0})'.format( source_file )
+		not_copied.append( source_file )
 
 def copy_files( source_path, destination_path ):
 	all_files = []
@@ -139,6 +155,7 @@ def copy_files( source_path, destination_path ):
 			destination_directory = '{0}/{1}'.format( destination_path, directory )
 			if not mod_path.exists( destination_directory ):
 				mod_os.makedirs( destination_directory )
+
 			copy( '{0}/{1}'.format( root, file_name ), '{0}/{1}'.format( destination_directory, file_name ) )
 
 def clean_directory( path ):
@@ -155,5 +172,8 @@ if __name__ == '__main__':
 		print '------', local_web_dir
 		copy_files( local_web_dir, TOMCAT_WEPAPP_DIR )
 	process_eclipse_classpath( '.', deploy_jars = True )
+
+	for file_name in not_copied:
+		print 'Except: {0}'.format( file_name )
 
 	print 'Deployed on {0}'.format( TOMCAT_WEPAPP_DIR )
