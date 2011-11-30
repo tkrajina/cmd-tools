@@ -42,7 +42,7 @@ try:
 		TOMCAT_WEPAPP_DIR = TOMCAT_WEPAPP_DIR[ : -1 ]
 
 	local_web_directories = []
-	try:
+	if isinstance( LOCAL_WEB_DIR, dict ) or isinstance( LOCAL_WEB_DIR, list ):
 		# Check if it is a collection:
 		iter( LOCAL_WEB_DIR )
 		for local_web_dir in LOCAL_WEB_DIR:
@@ -50,8 +50,9 @@ try:
 				local_web_directories.append( local_web_dir[ : -1 ] )
 			else:
 				local_web_directories.append( local_web_dir )
-	except:
+	else:
 		# Otherwise single string:
+		LOCAL_WEB_DIR = str( LOCAL_WEB_DIR )
 		if LOCAL_WEB_DIR.endswith( '/' ):
 			local_web_directories.append( LOCAL_WEB_DIR[ : -1 ] )
 		else:
@@ -151,6 +152,7 @@ def clean_directory( path ):
 if __name__ == '__main__':
 	create_empty_app_directory( TOMCAT_WEPAPP_DIR )
 	for local_web_dir in local_web_directories:
+		print '------', local_web_dir
 		copy_files( local_web_dir, TOMCAT_WEPAPP_DIR )
 	process_eclipse_classpath( '.', deploy_jars = True )
 
