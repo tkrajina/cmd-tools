@@ -35,6 +35,12 @@ if delete:
 		print 'Removed {0}'.format( file_name )
 	except:
 		print 'Error removing {0}'.format( file_name )
+
+	try:
+		mod_os.rmdir( path )
+		print 'Removed {0}'.format( path )
+	except:
+		print 'Error removing {0}'.format( path )
 else:
 	debug_class = """package temp;
 
@@ -146,6 +152,9 @@ public class DBG {
 	}
 
 	private static String joinObjects( String prefix, Object[] objects ) {
+		if( objects == null || objects.length == 0 )
+			return "";
+
 		StringBuilder result = new StringBuilder( prefix );
 		for( Object object : objects ) {
 			result.append( objectToString( object ) );
@@ -306,6 +315,12 @@ public class DBG {
     
 	public static void printTimer( int n ) {
 		print( getTimerTimes( n ) );
+	}
+
+	public static void sleep( long milliseconds ) {
+		try {
+			Thread.sleep( milliseconds );
+		} catch( Throwable ignore ) {}
 	}
     
 }"""
