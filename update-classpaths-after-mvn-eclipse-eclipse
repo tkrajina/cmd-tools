@@ -1,0 +1,57 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
+import os.path as mod_path
+import os      as mod_os
+import re      as mod_re
+
+def get_pom_artifact_id( pom_file_name ):
+	with open( pom_file_name ) as f:
+		pom_contents = f.read()
+
+	if '<parent>' in pom_contents:
+		pom_contents = pom_contents[ 0 : pom_contents.find( '<parent>' ) ] + pom_contents[ pom_contents.find( '</parent>' ) : ]
+
+	result = mod_re.findall( '.*?<project.*?<artifactId>([^<]*).*', pom_contents, mod_re.DOTALL )
+
+	print pom_file_name
+
+	return result[ 0 ]
+
+def get_artifact_ids():
+	result = []
+
+	directories = mod_os.listdir( '..' )
+
+	for directory in directories:
+		pom_file_name = '../{0}/pom.xml'.format( directory )
+		if mod_path.exists( pom_file_name ):
+			result.append( get_pom_artifact_id( pom_file_name ) )
+	
+	return result
+
+workspace_projects_artifacts = get_artifact_ids()
+
+with open( '.classpath' ) as f:
+	pom_contents = f.read()
+
+new_pom = ''
+
+result = []
+
+for line in pom_contents.split( '\n' ):
+	artifact_id_found = False
+
+	for artifact_id in workspace_projects_artifacts:
+		if '/{0}/'.format( artifact_id ) in line:
+			artifact_id_found = True
+  			replacement_line = '<classpathentry kind="src" path="/{0}"/>'.format( artifact_id )
+			if replacement_line not in result:
+				result.append( replacement_line )
+			result.append( '<!-- {0} -->'.format( line ) )
+
+	if not artifact_id_found:
+		result.append( line )
+
+with open( '.classpath', 'w' ) as f:
+	f.write( '\n'.join( result ) )
