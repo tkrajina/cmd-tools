@@ -9,10 +9,28 @@ import utils.optparser as mod_optparser
 opt_parser = mod_optparser.OptParser()
 
 delete = opt_parser.has_param( short_name = 'd', long_name = 'delete', comment = 'Delete' )
+no_compress = opt_parser.has_param( short_name = 'n', long_name = 'no-compress', comment = 'Compress class' )
 
 path = None
 
 src_paths = [ 'src', 'src/main/java' ]
+
+def compress( java_code ):
+	""" SO that with git diff, the diff will be smaller """
+	result = ''
+
+	for line in java_code.split( '\n' ):
+		line = line.strip()
+		if line.startswith( '//' ):
+			pass
+		elif line.startswith( '/*' ) and line.endswith( '*/' ):
+			pass
+		elif line.startswith( 'public ' ):
+			result += '\n' + line.strip()
+		else:
+			result += line.strip()
+	
+	return result
 
 for src_path in src_paths:
 	if mod_path.exists( src_path ):
@@ -75,11 +93,11 @@ public class DBG {
 			this.name = name;
 		}
 
-		public double getTime() {
+		double getTime() {
 			return time;
 		}
 
-		public String getName() {
+		String getName() {
 			return name;
 		}
 
@@ -114,11 +132,11 @@ public class DBG {
 		printLine( "TEMPDEBUG>", objects );
 	}
 	
-	public static void printBinaryRepresentation( byte[] bytes ) {
+	public static final void printBinaryRepresentation( byte[] bytes ) {
 		print( getBinaryRepresentation( bytes ) );
 	}
 	
-	public static String getBinaryRepresentation( byte[] bytes ) {
+	public static final String getBinaryRepresentation( byte[] bytes ) {
 		if( bytes == null ) {
 			return "null";
 		}
@@ -142,7 +160,7 @@ public class DBG {
 	
 	public static final void comment( Object... objects ) {}
 	
-	public static <T extends Object> T get( T object ) {
+	public static final <T extends Object> T get( T object ) {
 		return object;
 	}
 	
@@ -169,11 +187,11 @@ public class DBG {
 		return string;
 	}
 	
-	public static StackTraceElement getCurrentStackTraceElement() {
+	public static final StackTraceElement getCurrentStackTraceElement() {
 		return Thread.currentThread().getStackTrace()[ 2 ];
 	}
 	
-	public static void printStackTrace() {
+	public static final void printStackTrace() {
 		StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
 		for( int i = 2; i < stackTrace.length; i++ ) {
 			StackTraceElement stackTraceElement = stackTrace[ i ];
@@ -235,7 +253,7 @@ public class DBG {
 		return result.toString();
 	}
 	
-	public static String getCommandLine( Class<?> classWithMainMethod, String... additionalArguments ) {
+	public static final String getCommandLine( Class<?> classWithMainMethod, String... additionalArguments ) {
 		String javaCommand = "java";
 		if( FILE_SEPARATOR.equals( "\\\\" ) ) {
 			// Probably windows:
@@ -256,30 +274,30 @@ public class DBG {
 		return commandLine;
 	}
 	
-	public static String saveTime( Object... name ) {
+	public static final String saveTime( Object... name ) {
 		ArrayList<TimerData> times = THREAD_LOCAL.get();
 		times.add( new TimerData( System.nanoTime() / 1000000., joinObjects( "", name ) ) );
         
 		return getTimerTimes( 1 );
 	}
     
-	public static void resetTimer() {
+	public static final void resetTimer() {
 		ArrayList<TimerData> times = THREAD_LOCAL.get();
 		times.clear();
 	}
 
 	/** Reset and start saving times again */
-	public static void resetTimer( Object... name ) {
+	public static final void resetTimer( Object... name ) {
 		resetTimer();
         
 		saveTime( name );
 	}
 
-	public static String getTimerTimes() {
+	public static final String getTimerTimes() {
 		return getTimerTimes( 1000 );
 	}
 
-	public static String getTimerTimes( int n ) {
+	public static final String getTimerTimes( int n ) {
 		StringBuilder result = new StringBuilder();
 		ArrayList<TimerData> times = THREAD_LOCAL.get();
         
@@ -309,15 +327,15 @@ public class DBG {
 		return result.toString();
 	}
     
-	public static void printTimer() {
+	public static final void printTimer() {
 		print( getTimerTimes() );
 	}
     
-	public static void printTimer( int n ) {
+	public static final void printTimer( int n ) {
 		print( getTimerTimes( n ) );
 	}
 
-	public static void sleep( long milliseconds ) {
+	public static final void sleep( long milliseconds ) {
 		try {
 			Thread.sleep( milliseconds );
 		} catch( Throwable ignore ) {}
@@ -325,8 +343,13 @@ public class DBG {
     
 }"""
 
+	if no_compress:
+		code = debug_class
+	else:
+		code = compress( debug_class )
+
 	f = open( '%s/%s' % ( path, java_file_name ), 'w' )
-	f.write( debug_class )
+	f.write( code )
 	f.close()
 
 	print 'Written temp class: %s' % file_name
