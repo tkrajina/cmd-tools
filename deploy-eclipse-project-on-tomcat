@@ -134,7 +134,7 @@ def create_empty_app_directory( path ):
 
 def copy( source_file, destination_file ):
 	#print '{0} -> {1}'.format( source_file, destination_file )
-	print 'Copy: {0}'.format( destination_file )
+	#print 'Copy: {0}'.format( destination_file )
 
 	do_copy = True
 	for except_regexp in EXCEPT:
