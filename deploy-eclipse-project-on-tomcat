@@ -7,6 +7,7 @@ import os                as mod_os
 import os.path           as mod_path
 import xml.dom.minidom   as mod_minidom
 import shutil            as mod_shutil
+import traceback         as mod_traceback
 
 """
 Example of 'tomcat_deployment_descriptor' file:
@@ -21,9 +22,13 @@ PROJECT_ALIASES = {}
 CLASSPATH_VARIABLES = {
 	'M2_REPO': '/home/user/.m2/repository',
 }
+
 """
 
 not_copied = []
+
+# destination -> source
+destination_by_source = {}
 
 try:
 	tomcat_deployment_descriptor_file = open( 'tomcat_deployment_descriptor' )
@@ -64,8 +69,8 @@ try:
 		else:
 			local_web_directories.append( LOCAL_WEB_DIR )
 except Exception, e:
-	print e
 	print 'Invalid tomcat_deployment_descriptor file!'
+	mod_traceback.print_exc( e )
 	mod_sys.exit( 1 )
 
 def get_attribute_value( node, attribute_name ):
@@ -133,16 +138,16 @@ def create_empty_app_directory( path ):
 	mod_os.mkdir( '{0}/WEB-INF/classes'.format( path ) )
 
 def copy( source_file, destination_file ):
-	#print '{0} -> {1}'.format( source_file, destination_file )
-	#print 'Copy: {0}'.format( destination_file )
-
 	do_copy = True
 	for except_regexp in EXCEPT:
 		if mod_re.match( except_regexp, source_file ):
 			do_copy = False
 
 	if do_copy:
-		mod_shutil.copy( source_file, destination_file )
+		#mod_shutil.copy( source_file, destination_file )
+		#if destination_by_source.has_key( destination_file ):
+		#	print '{0} Already present ({1}), will be owerwritten with {2}'.format( destination_file, destination_by_source[ destination_file ], source_file )
+		destination_by_source[ destination_file ] = source_file
 	else:
 		print 'Exception (not copied): {0})'.format( source_file )
 		not_copied.append( source_file )
@@ -169,11 +174,24 @@ def clean_directory( path ):
 if __name__ == '__main__':
 	create_empty_app_directory( TOMCAT_WEPAPP_DIR )
 	for local_web_dir in local_web_directories:
-		print '------', local_web_dir
 		copy_files( local_web_dir, TOMCAT_WEPAPP_DIR )
+
+	print
+	print 'Processing files...'
+	print
+
 	process_eclipse_classpath( '.', deploy_jars = True )
+
+	i = 0
+	size = len( destination_by_source )
+	for destination, source in destination_by_source.items():
+		print '{0}% -> {1}'.format( int( 100 * i / float( size ) ), destination if len( destination ) < 80 else '...' + destination[ - 80 : ] )
+		mod_shutil.copy( source, destination )
+		i += 1
 
 	for file_name in not_copied:
 		print 'Except: {0}'.format( file_name )
 
+	print
 	print 'Deployed on {0}'.format( TOMCAT_WEPAPP_DIR )
+	print
