@@ -4,6 +4,7 @@
 import re                as mod_re
 import sys               as mod_sys
 import os                as mod_os
+import stat              as mod_stat
 import os.path           as mod_path
 import xml.dom.minidom   as mod_minidom
 import shutil            as mod_shutil
@@ -163,11 +164,21 @@ def copy_files( source_path, destination_path ):
 
 			copy( '{0}/{1}'.format( root, file_name ), '{0}/{1}'.format( destination_directory, file_name ) )
 
+# Fix from Petar Dučić -- fix if access error:
+def on_clean_directory_error( func, path, exc_info ):
+	if not mod_os.access( path, mod_os.W_OK ):
+		# Is the error an access error ?
+		mod_os.chmod( path, mod_stat.S_IWUSR )
+		func( path )
+	else:
+		print 'Error cleaning directory {0}'.format( exc_info )
+		mod_sys.exit( 1 )
+
 def clean_directory( path ):
 	if mod_path.exists( path ):
 		delete = raw_input( 'Delete %s and redeploy [y/n]? ' % path )
 		if delete.lower() == 'y': 
-			mod_shutil.rmtree( path )
+ 			mod_shutil.rmtree( path, onerror = on_clean_directory_error )
 		else:
 			mod_sys.exit( 1 )
 
