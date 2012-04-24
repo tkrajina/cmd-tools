@@ -121,9 +121,16 @@ def replace_dependency_version( group_id, artifact_id, current_version, desired_
 		if dependency.find( artifact_id ) >= 0 and dependency.find( group_id ) >= 0:
 			print '-----------------------------------------'
 			new_dependency = dependency.replace( current_version, desired_version )
-			print 'Change:{0}'.format( dependency.replace( '\n', ' ' ) )
-			print 'To:    {0}'.format( new_dependency.replace( '\n', ' ' ) )
-			pom = pom.replace( dependency, new_dependency )
+			#print 'Change:{0}'.format( dependency.replace( '\n', ' ' ) )
+			#print 'To:    {0}'.format( new_dependency.replace( '\n', ' ' ) )
+			print current_version, '->', desired_version
+			if current_version.startswith('${') and current_version.endswith('}'):
+				current_version_tag = current_version[ 2 : -1 ]
+				change_from = '(<{0}>).*(</{0}>)'.format(current_version_tag)
+				change_to = '<{0}>{1}</{0}>'.format(current_version_tag, desired_version)
+				pom, changes = mod_re.subn(change_from, change_to, pom)
+			else:
+				pom = pom.replace(dependency, new_dependency)
 	
 	return pom
 
