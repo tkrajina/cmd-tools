@@ -15,13 +15,13 @@ Example of 'tomcat_deployment_descriptor' file:
 
 TOMCAT_WEPAPP_DIR = '/path/to/tomcat/webapp/ApplicationName/'
 
-LOCAL_WEB_DIR = ( 'path/to/local/web/files', 'path/to/local/web/files' )
+LOCAL_WEB_DIR = ('path/to/local/web/files', 'path/to/local/web/files')
 
 PROJECT_ALIASES = {}
 
 # Used for parsing .classpath with maven jars:
 CLASSPATH_VARIABLES = {
-	'M2_REPO': '/home/user/.m2/repository',
+    'M2_REPO': '/home/user/.m2/repository',
 }
 
 """
@@ -32,177 +32,180 @@ not_copied = []
 destination_by_source = {}
 
 try:
-	tomcat_deployment_descriptor_file = open( 'tomcat_deployment_descriptor' )
-	tomcat_deployment_descriptor = tomcat_deployment_descriptor_file.read()
-	tomcat_deployment_descriptor_file.close()
+    tomcat_deployment_descriptor_file = open('tomcat_deployment_descriptor')
+    tomcat_deployment_descriptor = tomcat_deployment_descriptor_file.read()
+    tomcat_deployment_descriptor_file.close()
 
-	exec( tomcat_deployment_descriptor )
+    exec(tomcat_deployment_descriptor)
 
-	assert 'TOMCAT_WEPAPP_DIR' in vars().keys()
-	assert 'LOCAL_WEB_DIR' in vars().keys()
+    assert 'TOMCAT_WEPAPP_DIR' in vars().keys()
+    assert 'LOCAL_WEB_DIR' in vars().keys()
 
-	if not 'PROJECT_ALIASES' in vars().keys():
-		PROJECT_ALIASES = {}
+    if not 'PROJECT_ALIASES' in vars().keys():
+        PROJECT_ALIASES = {}
 
-	if not 'CLASSPATH_VARIABLES' in vars().keys():
-		CLASSPATH_VARIABLES = {}
+    if not 'CLASSPATH_VARIABLES' in vars().keys():
+        CLASSPATH_VARIABLES = {}
 
-	if not 'EXCEPT' in vars().keys():
-		EXCEPT = []
+    if not 'EXCEPT' in vars().keys():
+        EXCEPT = []
 
-	if TOMCAT_WEPAPP_DIR.endswith( '/' ):
-		TOMCAT_WEPAPP_DIR = TOMCAT_WEPAPP_DIR[ : -1 ]
+    if TOMCAT_WEPAPP_DIR.endswith('/'):
+        TOMCAT_WEPAPP_DIR = TOMCAT_WEPAPP_DIR[: -1]
 
-	local_web_directories = []
-	if isinstance( LOCAL_WEB_DIR, dict ) or isinstance( LOCAL_WEB_DIR, list ):
-		# Check if it is a collection:
-		iter( LOCAL_WEB_DIR )
-		for local_web_dir in LOCAL_WEB_DIR:
-			if local_web_dir.endswith( '/' ):
-				local_web_directories.append( local_web_dir[ : -1 ] )
-			else:
-				local_web_directories.append( local_web_dir )
-	else:
-		# Otherwise single string:
-		LOCAL_WEB_DIR = str( LOCAL_WEB_DIR )
-		if LOCAL_WEB_DIR.endswith( '/' ):
-			local_web_directories.append( LOCAL_WEB_DIR[ : -1 ] )
-		else:
-			local_web_directories.append( LOCAL_WEB_DIR )
+    local_web_directories = []
+    if isinstance(LOCAL_WEB_DIR, dict) or isinstance(LOCAL_WEB_DIR, list):
+        # Check if it is a collection:
+        iter(LOCAL_WEB_DIR)
+        for local_web_dir in LOCAL_WEB_DIR:
+            if local_web_dir.endswith('/'):
+                local_web_directories.append(local_web_dir[: -1])
+            else:
+                local_web_directories.append(local_web_dir)
+    else:
+        # Otherwise single string:
+        LOCAL_WEB_DIR = str(LOCAL_WEB_DIR)
+        if LOCAL_WEB_DIR.endswith('/'):
+            local_web_directories.append(LOCAL_WEB_DIR[: -1])
+        else:
+            local_web_directories.append(LOCAL_WEB_DIR)
 except Exception, e:
-	print 'Invalid tomcat_deployment_descriptor file!'
-	mod_traceback.print_exc( e )
-	mod_sys.exit( 1 )
+    print 'Invalid tomcat_deployment_descriptor file!'
+    mod_traceback.print_exc(e)
+    mod_sys.exit(1)
 
-def get_attribute_value( node, attribute_name ):
-	attributes = node.attributes
-	if not attribute_name in attributes.keys():
-		return None
-	return attributes[ attribute_name ].nodeValue
+def get_attribute_value(node, attribute_name):
+    attributes = node.attributes
+    if not attribute_name in attributes.keys():
+        return None
+    return attributes[attribute_name].nodeValue
 
-def get_file_name( path ):
-	if not path:
-		return path
-	if not '/' in path:
-		return path
+def get_file_name(path):
+    if not path:
+        return path
+    if not '/' in path:
+        return path
 	
-	return path.split( '/' )[ -1 ]
+    return path.split('/')[-1]
 
-def process_eclipse_classpath( project_path, deploy_jars = True ):
-	classpath_file = open( '{0}/.classpath'.format( project_path ) )
-	dom = mod_minidom.parseString( classpath_file.read() )
-	classpath_file.close()
+def process_eclipse_classpath(project_path, deploy_jars = True):
+    classpath_file = open('{0}/.classpath'.format(project_path))
+    dom = mod_minidom.parseString(classpath_file.read())
+    classpath_file.close()
 
-	source_path_outputs = {}
-	default_output = None
+    source_path_outputs = {}
+    default_output = None
 
-	root_node = dom.childNodes[ 0 ]
-	for node in root_node.childNodes:
-		if node.nodeName == 'classpathentry':
-			kind = get_attribute_value( node, 'kind' )
-			if kind == 'var' and deploy_jars:
-				path = get_attribute_value( node, 'path' )
-				for classpath_variable, classpath_variable_value in CLASSPATH_VARIABLES.items():
-					if classpath_variable in path:
-						path = path.replace( classpath_variable, classpath_variable_value )
-				jar_destination = '{0}/WEB-INF/lib/{1}'.format( TOMCAT_WEPAPP_DIR, get_file_name( path ) )
-				if not 'servlet-api' in path:
-					copy( path, jar_destination )
-			elif kind == 'src':
-				path = get_attribute_value( node, 'path' )
-				if path.startswith( '/' ):
-					#print 'projekt', kind, path
-					project_name = path[ 1 : ]
-					#print project_name
-					if PROJECT_ALIASES.has_key( project_name ):
-						project_name = PROJECT_ALIASES[ project_name ]
-					process_eclipse_classpath( '../{0}'.format( project_name ), deploy_jars = False )
-				else:
-					output = get_attribute_value( node, 'output' )
-					source_path_outputs[ path ] = output
-					#print 'lokalno', kind, path, output
-			elif kind == 'output':
-				default_output = get_attribute_value( node, 'path' )
+    root_node = dom.childNodes[0]
+    for node in root_node.childNodes:
+        if node.nodeName == 'classpathentry':
+            kind = get_attribute_value(node, 'kind')
+            if kind == 'var' and deploy_jars:
+                path = get_attribute_value(node, 'path')
+                for classpath_variable, classpath_variable_value in CLASSPATH_VARIABLES.items():
+                    if classpath_variable in path:
+                        path = path.replace(classpath_variable, classpath_variable_value)
+                jar_destination = '{0}/WEB-INF/lib/{1}'.format(TOMCAT_WEPAPP_DIR, get_file_name(path))
+                if not 'servlet-api' in path:
+                    copy(path, jar_destination)
+            elif kind == 'src':
+                path = get_attribute_value(node, 'path')
+                if path.startswith('/'):
+                    #print 'projekt', kind, path
+                    project_name = path[1 :]
+                    #print project_name
+                    if PROJECT_ALIASES.has_key(project_name):
+                        project_name = PROJECT_ALIASES[project_name]
+                    process_eclipse_classpath('../{0}'.format(project_name), deploy_jars = False)
+                else:
+                    output = get_attribute_value(node, 'output')
+                    source_path_outputs[path] = output
+                    #print 'lokalno', kind, path, output
+            elif kind == 'output':
+                default_output = get_attribute_value(node, 'path')
 
-	for source_path in source_path_outputs.keys():
-		if not source_path_outputs[ source_path ]:
-			source_path_outputs[ source_path ] = default_output
+    for source_path in source_path_outputs.keys():
+        if not source_path_outputs[source_path]:
+            source_path_outputs[source_path] = default_output
 
-	for output in source_path_outputs.values():
-		copy_files( '{0}/{1}'.format( project_path, output ), '{0}/WEB-INF/classes'.format( TOMCAT_WEPAPP_DIR ) )
+    for output in source_path_outputs.values():
+        copy_files('{0}/{1}'.format(project_path, output), '{0}/WEB-INF/classes'.format(TOMCAT_WEPAPP_DIR))
 
-def create_empty_app_directory( path ):
-	clean_directory( path )
-	mod_os.mkdir( path )
-	mod_os.mkdir( '{0}/WEB-INF'.format( path ) )
-	mod_os.mkdir( '{0}/WEB-INF/lib'.format( path ) )
-	mod_os.mkdir( '{0}/WEB-INF/classes'.format( path ) )
+def create_empty_app_directory(path):
+    clean_directory(path)
+    mod_os.mkdir(path)
+    mod_os.mkdir('{0}/WEB-INF'.format(path))
+    mod_os.mkdir('{0}/WEB-INF/lib'.format(path))
+    mod_os.mkdir('{0}/WEB-INF/classes'.format(path))
 
-def copy( source_file, destination_file ):
-	do_copy = True
-	for except_regexp in EXCEPT:
-		if mod_re.match( except_regexp, source_file ):
-			do_copy = False
+def copy(source_file, destination_file):
+    do_copy = True
+    for except_regexp in EXCEPT:
+        if mod_re.match(except_regexp, source_file):
+            do_copy = False
 
-	if do_copy:
-		#mod_shutil.copy( source_file, destination_file )
-		#if destination_by_source.has_key( destination_file ):
-		#	print '{0} Already present ({1}), will be owerwritten with {2}'.format( destination_file, destination_by_source[ destination_file ], source_file )
-		destination_by_source[ destination_file ] = source_file
-	else:
-		print 'Ignored: {0})'.format( source_file )
-		not_copied.append( source_file )
+    if do_copy:
+        #mod_shutil.copy(source_file, destination_file)
+        #if destination_by_source.has_key(destination_file):
+        #	print '{0} Already present ({1}), will be owerwritten with {2}'.format(destination_file, destination_by_source[destination_file], source_file)
+        destination_by_source[destination_file] = source_file
+    else:
+        print 'Ignored: {0})'.format(source_file)
+        not_copied.append(source_file)
 
-def copy_files( source_path, destination_path ):
-	all_files = []
-	for root, dir_name, files in mod_os.walk( source_path ):
-		for file_name in files:
-			directory = root[ len( source_path ) + 1 : ]
-			destination_directory = '{0}/{1}'.format( destination_path, directory )
-			if not mod_path.exists( destination_directory ):
-				mod_os.makedirs( destination_directory )
+def copy_files(source_path, destination_path):
+    all_files = []
+    for root, dir_name, files in mod_os.walk(source_path):
+        for file_name in files:
+            directory = root[len(source_path) + 1 :]
+            destination_directory = '{0}/{1}'.format(destination_path, directory)
+            if not mod_path.exists(destination_directory):
+                mod_os.makedirs(destination_directory)
 
-			copy( '{0}/{1}'.format( root, file_name ), '{0}/{1}'.format( destination_directory, file_name ) )
+            copy('{0}/{1}'.format(root, file_name), '{0}/{1}'.format(destination_directory, file_name))
 
 # Fix from Petar Dučić -- fix if access error:
-def on_clean_directory_error( func, path, exc_info ):
-	if not mod_os.access( path, mod_os.W_OK ):
-		# Is the error an access error ?
-		mod_os.chmod( path, mod_stat.S_IWUSR )
-		func( path )
-	else:
-		print 'Error cleaning directory {0}'.format( exc_info )
-		mod_sys.exit( 1 )
+def on_clean_directory_error(func, path, exc_info):
+    if not mod_os.access(path, mod_os.W_OK):
+        # Is the error an access error ?
+        mod_os.chmod(path, mod_stat.S_IWUSR)
+        func(path)
+    else:
+        print 'Error cleaning directory {0}'.format(exc_info)
+        mod_sys.exit(1)
 
-def clean_directory( path ):
-	if mod_path.exists( path ):
-		delete = raw_input( 'Delete %s and redeploy [y/n]? ' % path )
-		if delete.lower() == 'y': 
- 			mod_shutil.rmtree( path, onerror = on_clean_directory_error )
-		else:
-			mod_sys.exit( 1 )
+def clean_directory(path):
+    if mod_path.exists(path):
+        delete = raw_input('Delete %s and redeploy [y/n]? ' % path)
+        if delete.lower() == 'y': 
+ 			mod_shutil.rmtree(path, onerror = on_clean_directory_error)
+        else:
+            mod_sys.exit(1)
 
 if __name__ == '__main__':
-	create_empty_app_directory( TOMCAT_WEPAPP_DIR )
-	for local_web_dir in local_web_directories:
-		copy_files( local_web_dir, TOMCAT_WEPAPP_DIR )
+    create_empty_app_directory(TOMCAT_WEPAPP_DIR)
+    for local_web_dir in local_web_directories:
+        print local_web_dir
+        copy_files(local_web_dir, TOMCAT_WEPAPP_DIR)
 
-	print
-	print 'Processing files...'
-	print
+    print
+    print 'Processing files...'
+    print
 
-	process_eclipse_classpath( '.', deploy_jars = True )
+    process_eclipse_classpath('.', deploy_jars = True)
 
-	i = 0
-	size = len( destination_by_source )
-	for destination, source in destination_by_source.items():
-		print '{0}% -> {1}'.format( int( 100 * i / float( size ) ), destination if len( destination ) < 80 else '...' + destination[ - 80 : ] )
-		mod_shutil.copy( source, destination )
-		i += 1
+    i = 0
+    size = len(destination_by_source)
+    for destination, source in destination_by_source.items():
+        #print '{0}% -> {1}'.format(int(100 * i / float(size)), destination if len(destination) < 80 else '...' + destination[- 80 :])
+        print '{0}%'.format(int(100 * i / float(size)))
+        mod_shutil.copy(source, destination)
+        i += 1
 
-	for file_name in not_copied:
-		print 'Ignored: {0}'.format( file_name )
+    for file_name in not_copied:
+        print 'Ignored: {0}'.format(file_name)
 
-	print
-	print 'Deployed on {0}'.format( TOMCAT_WEPAPP_DIR )
-	print
+    print
+    print 'Deployed on {0}'.format(TOMCAT_WEPAPP_DIR)
+    print
+
