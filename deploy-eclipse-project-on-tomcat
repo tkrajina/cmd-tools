@@ -1,6 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
+import filecmp           as mod_filecmp
 import re                as mod_re
 import sys               as mod_sys
 import os                as mod_os
@@ -133,10 +134,14 @@ def process_eclipse_classpath(project_path, deploy_jars = True):
 
 def create_empty_app_directory(path):
     clean_directory(path)
-    mod_os.mkdir(path)
-    mod_os.mkdir('{0}/WEB-INF'.format(path))
-    mod_os.mkdir('{0}/WEB-INF/lib'.format(path))
-    mod_os.mkdir('{0}/WEB-INF/classes'.format(path))
+    mkdir_if_not_exists(path)
+    mkdir_if_not_exists('{0}/WEB-INF'.format(path))
+    mkdir_if_not_exists('{0}/WEB-INF/lib'.format(path))
+    mkdir_if_not_exists('{0}/WEB-INF/classes'.format(path))
+
+def mkdir_if_not_exists(path):
+    if not mod_path.exists(path):
+        mod_os.mkdir(path)
 
 def copy(source_file, destination_file):
     do_copy = True
@@ -144,13 +149,15 @@ def copy(source_file, destination_file):
         if mod_re.match(except_regexp, source_file):
             do_copy = False
 
+    if mod_path.exists(destination_file) and mod_filecmp.cmp(source_file, destination_file):
+        do_copy = False
+
     if do_copy:
         #mod_shutil.copy(source_file, destination_file)
         #if destination_by_source.has_key(destination_file):
         #	print '{0} Already present ({1}), will be owerwritten with {2}'.format(destination_file, destination_by_source[destination_file], source_file)
         destination_by_source[destination_file] = source_file
     else:
-        print 'Ignored: {0})'.format(source_file)
         not_copied.append(source_file)
 
 def copy_files(source_path, destination_path):
@@ -162,7 +169,10 @@ def copy_files(source_path, destination_path):
             if not mod_path.exists(destination_directory):
                 mod_os.makedirs(destination_directory)
 
-            copy('{0}/{1}'.format(root, file_name), '{0}/{1}'.format(destination_directory, file_name))
+
+            source_file_name = '{0}/{1}'.format(root, file_name)
+            destination_file_name = '{0}/{1}'.format(destination_directory, file_name)
+            copy(source_file_name, destination_file_name)
 
 # Fix from Petar Dučić -- fix if access error:
 def on_clean_directory_error(func, path, exc_info):
@@ -179,8 +189,6 @@ def clean_directory(path):
         delete = raw_input('Delete %s and redeploy [y/n]? ' % path)
         if delete.lower() == 'y': 
  			mod_shutil.rmtree(path, onerror = on_clean_directory_error)
-        else:
-            mod_sys.exit(1)
 
 if __name__ == '__main__':
     create_empty_app_directory(TOMCAT_WEPAPP_DIR)
@@ -197,13 +205,14 @@ if __name__ == '__main__':
     i = 0
     size = len(destination_by_source)
     for destination, source in destination_by_source.items():
-        #print '{0}% -> {1}'.format(int(100 * i / float(size)), destination if len(destination) < 80 else '...' + destination[- 80 :])
-        print '{0}%'.format(int(100 * i / float(size)))
+        print '{0}% -> {1}'.format(int(100 * i / float(size)), destination if len(destination) < 80 else '...' + destination[- 80 :])
+        #print '{0}%'.format(int(100 * i / float(size)))
         mod_shutil.copy(source, destination)
         i += 1
 
     for file_name in not_copied:
-        print 'Ignored: {0}'.format(file_name)
+        #print 'Ignored: {0}'.format(file_name)
+        pass
 
     print
     print 'Deployed on {0}'.format(TOMCAT_WEPAPP_DIR)
