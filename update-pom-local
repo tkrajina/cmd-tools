@@ -69,8 +69,11 @@ def parse_project_metadata(project_folder):
     return result
 
 def is_maven_project(directory):
-    pom_file = '{0}/pom.xml'.format(directory)
-    return mod_path.exists(pom_file)
+    try:
+        pom_file = '{0}/pom.xml'.format(directory)
+        return mod_path.exists(pom_file)
+    except Exception, e:
+        return False
 
 def update_pom(directory):
     print 'Update pom: {0}'.format(directory)
@@ -140,8 +143,11 @@ project_metadatas = []
 
 for directory in directories:
     if is_maven_project(directory):
-        metadata = parse_project_metadata(directory)
-        project_metadatas.append(metadata)
+        try:
+            metadata = parse_project_metadata(directory)
+            project_metadatas.append(metadata)
+        except Exception, e:
+            pass
 
 for directory in projects:
     if is_maven_project(directory):
