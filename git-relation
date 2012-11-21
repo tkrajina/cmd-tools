@@ -11,14 +11,6 @@ import sys as mod_sys
 
 branches = mod_sys.argv[1:]
 
-if not branches:
-    print 'No branches specified'
-    mod_sys.exit(1)
-
-if len(branches) != 2:
-    print 'Two branches expected, got %s' % branches
-    mod_sys.exit(1)
-
 def execute(command):
 	output = ''
 	p = mod_os.popen( command )
@@ -26,6 +18,26 @@ def execute(command):
 		output += '%s' % line
 
 	return (not p.close(), output)
+
+if not branches:
+    print 'No branches specified'
+    mod_sys.exit(1)
+
+if len(branches) == 1:
+    success, sha1 = execute('git log -1 --format=%H')
+    if not success:
+        print 'Cannot find SHA1 for current branch'
+        mod_sys.exit(1)
+    sha1 = sha1.strip()
+    success, branch = execute('git name-rev %s' % sha1)
+    if success:
+        branches = [ branch.split(' ')[1].strip() ] + branches
+    else:
+        branches = [sha1] + branches
+
+if len(branches) != 2:
+    print 'Two branches expected, got %s' % branches
+    mod_sys.exit(1)
 
 def get_git_sha1(branch_name):
     success, sha1 = execute('git log -1 %s --format=%%H' % branch_name)
@@ -35,7 +47,7 @@ def get_git_sha1(branch_name):
     return sha1.strip()
 
 def print_log(commit_1, commit_2):
-    print 'History from \033[1;34m%s\033[1;m to \033[1;34m%s\033[1;m:' % (commit_1, commit_2)
+    print 'Commits from \033[1;34m%s\033[1;m to \033[1;34m%s\033[1;m:' % (commit_1, commit_2)
     success, log = execute('git log %s..%s --format="  %%h %%Cgreen%%an%%Creset \"%%Cred%%s%%Creset\", %%ar"' % (commit_1, commit_2))
     if not success:
         print 'Error retrieving log %s..%s' % (commit_1, commit_2)
