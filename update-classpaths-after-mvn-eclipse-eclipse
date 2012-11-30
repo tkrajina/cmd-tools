@@ -41,6 +41,7 @@ result = []
 
 project_classpath_entries = []
 
+under_comment = False
 for line in pom_contents.split('\n'):
     artifact_id_found = False
 
@@ -51,10 +52,22 @@ for line in pom_contents.split('\n'):
             if replacement_line not in result:
                 if not replacement_line in project_classpath_entries:
                     project_classpath_entries.append(replacement_line)
-            result.append('<!-- {0} -->'.format(line))
+            if line.strip().endswith('/>'):
+                result.append('<!-- {0} -->'.format(line))
+            else:
+                result.append('<!-- {0}'.format(line))
+                under_comment = True
 
     if not artifact_id_found:
-        result.append(line)
+        if under_comment:
+            if line.strip() == '</classpathentry>':
+                result.append(line)
+                result.append('-->')
+                under_comment = False
+            else:
+                result.append(line)
+        else:
+            result.append(line)
 
 classpath = '\n'.join(result)
 classpath = classpath.replace('</classpath>', '\n'.join(project_classpath_entries)) + '\n</classpath>'
