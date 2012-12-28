@@ -46,7 +46,7 @@ for line in pom_contents.split('\n'):
     artifact_id_found = False
 
     for artifact_id in workspace_projects_artifacts:
-        if '/{0}/'.format(artifact_id) in line:
+        if '/{0}/'.format(artifact_id) in line and 'classpathe' in line:
             artifact_id_found = True
             replacement_line = '<classpathentry kind="src" path="/{0}"/>'.format(artifact_id)
             if replacement_line not in result:
