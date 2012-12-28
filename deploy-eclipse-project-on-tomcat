@@ -211,7 +211,7 @@ if __name__ == '__main__':
         i += 1
 
     for file_name in not_copied:
-        #print 'Ignored: {0}'.format(file_name)
+        print 'Ignored: {0}'.format(file_name)
         pass
 
     print
