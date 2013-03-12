@@ -24,16 +24,7 @@ if not branches:
     mod_sys.exit(1)
 
 if len(branches) == 1:
-    success, sha1 = execute('git log -1 --format=%H')
-    if not success:
-        print 'Cannot find SHA1 for current branch'
-        mod_sys.exit(1)
-    sha1 = sha1.strip()
-    success, branch = execute('git name-rev %s' % sha1)
-    if success:
-        branches = [ branch.split(' ')[1].strip() ] + branches
-    else:
-        branches = [sha1] + branches
+    branches = ['HEAD'] + branches
 
 if len(branches) != 2:
     print 'Two branches expected, got %s' % branches
