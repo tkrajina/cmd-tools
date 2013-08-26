@@ -8,8 +8,9 @@ title=$1
 
 if [ -z "$title" ]
 then
-    echo "No title given"
-    exit 1
+    title=$(pwd | sed -r "s/.*\/(.*)/\1/")
+    echo "Current dir: $title"
 fi
 
-echo -en "\033]0;$title\a"
+echo "Window title: $title"
+echo "\033]0;$title\a"
