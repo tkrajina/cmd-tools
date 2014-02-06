@@ -10,7 +10,12 @@ then
     exit 1
 fi
 
-webapps_path=../.metadata/.plugins/org.eclipse.wst.server.core/$tomcat_instance/webapps/
+if [ -d $tomcat_instance ]
+then
+    webapps_path=$tomcat_instance
+else
+    webapps_path=../.metadata/.plugins/org.eclipse.wst.server.core/$tomcat_instance/webapps/
+fi
 
 if [ ! -d "$webapps_path" ]
 then
