@@ -1,0 +1,2 @@
+#!/bin/sh
+ctags -R . $(python -c "import sys;print(' '.join(sys.path))")
