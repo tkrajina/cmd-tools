@@ -1,0 +1,4 @@
+ls -A | while read f
+do
+    du -hs "$f"
+done | gsort -h
