@@ -5,6 +5,7 @@ import (
 	"flag"
 	"fmt"
 	"io/ioutil"
+	"os"
 	"regexp"
 	"sort"
 	"strings"
@@ -19,20 +20,43 @@ func panicIfErr(err error) {
 }
 
 func main() {
+	var toFile string
+
+	flag.StringVar(&toFile, "to", "", "Append to file")
 	flag.Parse()
 
 	for _, filename := range flag.Args() {
 		bytes, err := ioutil.ReadFile(filename)
 		panicIfErr(err)
 
-		parseKindleNotes(string(bytes))
+		res := parseKindleNotes(string(bytes))
+		fmt.Println(res)
+
+		if len(toFile) > 0 {
+			f, err := os.OpenFile(toFile, os.O_APPEND|os.O_WRONLY, 0600)
+			panicIfErr(err)
+			_, err = f.WriteString(res)
+			panicIfErr(err)
+			_ = f.Close()
+
+			fmt.Printf("Appended to %s\n", toFile)
+			fmt.Printf("Empty %s [y/N]?", filename)
+			var answer string
+			fmt.Scanf("%s", &answer)
+			if answer == "y" {
+				fmt.Println("Emptying " + filename)
+				err = ioutil.WriteFile(filename, []byte{}, 777)
+				panicIfErr(err)
+			}
+		}
 	}
 }
 
-func parseKindleNotes(str string) {
+func parseKindleNotes(str string) string {
 	var keys []string
 	var texts = map[string][]string{}
 
+	var res bytes.Buffer
 	var unknown bytes.Buffer
 	parts := strings.Split(str, "==========")
 	for _, part := range parts {
@@ -69,19 +93,19 @@ func parseKindleNotes(str string) {
 	sort.Strings(keys)
 
 	for _, key := range keys {
-		if len(texts[key]) == 0 {
+		txt := strings.TrimSpace(strings.Join(texts[key], "\n"))
+		if len(txt) == 0 {
 			continue
 		}
-		fmt.Println("#", key, "\n")
-		for _, text := range texts[key] {
-			fmt.Println(text)
-		}
-		fmt.Println("\n\n")
+		res.WriteString("# " + key + "\n\n")
+		res.WriteString(txt)
+		res.WriteString("\n\n")
 	}
 
 	if unknown.Len() > 0 {
-		fmt.Println("# Unknown")
-		fmt.Println()
-		fmt.Println(unknown.String())
+		res.WriteString("# Unknown\n\n")
+		res.WriteString(unknown.String())
 	}
+
+	return res.String()
 }
