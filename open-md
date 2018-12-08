@@ -1,5 +1,5 @@
 tmpfile=$(mktemp)
 mv $tmpfile ${tmpfile}.html
-pandoc -s -o ${tmpfile}.html $1
+pandoc --number-section --toc -s -o ${tmpfile}.html $1
 echo ${tmpfile}.html
 open ${tmpfile}.html
