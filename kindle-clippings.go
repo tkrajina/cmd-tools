@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"path"
 	"regexp"
 	"sort"
 	"strings"
@@ -26,6 +27,9 @@ func main() {
 	flag.Parse()
 
 	for _, filename := range flag.Args() {
+		if !strings.HasSuffix(filename, ".txt") {
+			filename = path.Join(filename, "documents/My Clippings.txt")
+		}
 		bytes, err := ioutil.ReadFile(filename)
 		panicIfErr(err)
 
