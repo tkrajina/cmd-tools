@@ -79,7 +79,14 @@ func parseKindleNotes(str string) string {
 				all := metadataReg.FindAllStringSubmatch(metadata, -1)
 				typ := all[0][1]
 				loc := all[0][2]
-				_ = loc
+
+				if typ == "Note" {
+					text = "Note: " + text
+				}
+				if typ == "Highlight" || typ == "Note" {
+					typ = "Txt"
+				}
+
 				//fmt.Printf("type=%s location=%s\n", typ, loc)
 
 				key := fmt.Sprintf("%s :: %s", strings.TrimSpace(title), strings.TrimSpace(typ))
