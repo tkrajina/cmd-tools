@@ -1,0 +1,4 @@
+jsFile=$(mktemp)
+tsc --outFile $jsFile $1
+node $jsFile
+rm $jsFile
