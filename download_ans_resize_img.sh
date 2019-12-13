@@ -24,3 +24,4 @@ echo convert tmp.jpg -filter spline -resize ${size}x${size} -unsharp 0x1 $name
 convert tmp.jpg -filter spline -resize ${size}x${size} -quality 80 -unsharp 0x1 $name
 convert tmp.jpg -type Grayscale tmp_bw.jpg
 convert tmp_bw.jpg -filter spline -resize ${size}x${size} -quality 80 -unsharp 0x1 bw_$name
+ls -alht
