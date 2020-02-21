@@ -8,8 +8,21 @@ import os
 import time
 import shutil
 import math
+import argparse
 
 from typing import *
+
+parser = argparse.ArgumentParser(description='...')
+parser.add_argument('-c', '--crop', default='120,10,100,10', help='Crop')
+args = parser.parse_args()
+
+crop = args.crop.split(",")
+if len(crop) != 4:
+    raise Exception("Invalid crop")
+
+# Convert pages and add page numbers
+n, w, s, e = crop[0], crop[1], crop[2], crop[3]
+print(f"Cropping {n}, {w}, {s}, {e}")
 
 # Screencapture until new...
 
@@ -42,11 +55,6 @@ for file in os.listdir(tmp_dir):
 if input(f"Open {directory}? [yn] ") == "y":
     subprocess.check_output(["open", directory])
 
-# Convert pages and add page numbers
-n=120
-w=10
-s=100
-e=10
 prefix = "work_"
 if input(f"Convert {directory} to pdf? [yn] ") == "y":
     page_from = 0
